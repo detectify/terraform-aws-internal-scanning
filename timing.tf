@@ -25,3 +25,15 @@ resource "time_sleep" "wait_for_alb" {
 
   create_duration = var.alb_provisioning_timeout
 }
+
+# On destroy, wait for ALB controller to clean up AWS resources (ALBs, target groups)
+# after ingresses are deleted but before the controller itself is removed.
+resource "time_sleep" "wait_for_alb_cleanup" {
+  count = var.create_ingress ? 1 : 0
+
+  depends_on = [
+    helm_release.aws_load_balancer_controller
+  ]
+
+  destroy_duration = var.alb_provisioning_timeout
+}

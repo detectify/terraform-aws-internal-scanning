@@ -7,6 +7,11 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [1.0.4] - 2026-02-10
+
+### Fixed
+- Add ALB cleanup delay on destroy to prevent the ALB controller from being removed before it finishes cleaning up AWS resources (ALBs, target groups) for ingresses
+
 ## [1.0.3] - 2026-02-10
 
 ### Fixed
@@ -51,7 +56,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - AWS Route53 (optional DNS)
 - AWS CloudWatch (optional observability)
 
-[Unreleased]: https://github.com/detectify/terraform-aws-internal-scanning/compare/v1.0.3...HEAD
+[Unreleased]: https://github.com/detectify/terraform-aws-internal-scanning/compare/v1.0.4...HEAD
+[1.0.4]: https://github.com/detectify/terraform-aws-internal-scanning/compare/v1.0.3...v1.0.4
 [1.0.3]: https://github.com/detectify/terraform-aws-internal-scanning/compare/v1.0.2...v1.0.3
 [1.0.2]: https://github.com/detectify/terraform-aws-internal-scanning/compare/v1.0.1...v1.0.2
 [1.0.1]: https://github.com/detectify/terraform-aws-internal-scanning/compare/v1.0.0...v1.0.1

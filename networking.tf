@@ -76,8 +76,9 @@ resource "kubernetes_ingress_v1" "scan_scheduler" {
   }
 
   depends_on = [
-    module.eks, # Wait for EKS cluster and access entries
+    module.eks,                          # Wait for EKS cluster and access entries
     helm_release.aws_load_balancer_controller,
-    helm_release.scanner # Wait for Helm to create namespace and service
+    helm_release.scanner,                # Wait for Helm to create namespace and service
+    time_sleep.wait_for_alb_cleanup,     # On destroy: wait for ALB cleanup before removing controller
   ]
 }
