@@ -9,7 +9,7 @@ resource "helm_release" "scanner" {
   namespace = "scanner"
 
   # Use local path if provided, otherwise use repository
-  chart      = var.helm_chart_path != null ? var.helm_chart_path : "scanner"
+  chart      = var.helm_chart_path != null ? var.helm_chart_path : "internal-scanning-agent"
   repository = var.helm_chart_path != null ? null : var.helm_chart_repository
   version    = var.helm_chart_path != null ? null : var.helm_chart_version
 
