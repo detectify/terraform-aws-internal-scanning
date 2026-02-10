@@ -7,6 +7,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [1.0.3] - 2026-02-10
+
+### Fixed
+- Fix `depends_on` references in ingress data sources and DNS records to use resource references instead of indexed instances (`[0]`), which failed on initial deployment when conditional resources did not yet exist
+- Add `time_sleep.wait_for_alb` dependency to Prometheus ingress status data source to ensure ALB is provisioned before querying
+
 ## [1.0.2] - 2026-02-10
 
 ### Fixed
@@ -45,7 +51,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - AWS Route53 (optional DNS)
 - AWS CloudWatch (optional observability)
 
-[Unreleased]: https://github.com/detectify/terraform-aws-internal-scanning/compare/v1.0.2...HEAD
+[Unreleased]: https://github.com/detectify/terraform-aws-internal-scanning/compare/v1.0.3...HEAD
+[1.0.3]: https://github.com/detectify/terraform-aws-internal-scanning/compare/v1.0.2...v1.0.3
 [1.0.2]: https://github.com/detectify/terraform-aws-internal-scanning/compare/v1.0.1...v1.0.2
 [1.0.1]: https://github.com/detectify/terraform-aws-internal-scanning/compare/v1.0.0...v1.0.1
 [1.0.0]: https://github.com/detectify/terraform-aws-internal-scanning/releases/tag/v1.0.0

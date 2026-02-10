@@ -14,8 +14,8 @@ data "kubernetes_ingress_v1" "scan_scheduler_status" {
   }
 
   depends_on = [
-    kubernetes_ingress_v1.scan_scheduler[0],
-    time_sleep.wait_for_alb[0]
+    kubernetes_ingress_v1.scan_scheduler,
+    time_sleep.wait_for_alb
   ]
 }
 
@@ -29,6 +29,7 @@ data "kubernetes_ingress_v1" "prometheus_status" {
   }
 
   depends_on = [
-    kubernetes_ingress_v1.prometheus[0]
+    kubernetes_ingress_v1.prometheus,
+    time_sleep.wait_for_alb
   ]
 }

@@ -54,8 +54,8 @@ resource "aws_route53_record" "scan_scheduler" {
   }
 
   depends_on = [
-    data.kubernetes_ingress_v1.scan_scheduler_status[0],
-    time_sleep.wait_for_alb[0]
+    data.kubernetes_ingress_v1.scan_scheduler_status,
+    time_sleep.wait_for_alb
   ]
 }
 
@@ -94,6 +94,6 @@ resource "aws_route53_record" "prometheus" {
   }
 
   depends_on = [
-    data.kubernetes_ingress_v1.prometheus_status[0]
+    data.kubernetes_ingress_v1.prometheus_status
   ]
 }
