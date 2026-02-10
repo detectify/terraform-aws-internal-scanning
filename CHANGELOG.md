@@ -7,12 +7,17 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [1.0.2] - 2026-02-10
+
+### Fixed
+- Add `depends_on` to cluster outputs (`cluster_name`, `cluster_endpoint`, `cluster_certificate_authority_data`) to avoid race condition with the Helm provider on initial deployment
+
 ## [1.0.1] - 2026-02-10
 
 ### Fixed
 - Use published Helm chart name `internal-scanning-agent` from repository instead of incorrect `scanner`
 
-## [1.0.0] - 2024-12-17
+## [1.0.0] - 2026-02-03
 
 ### Added
 - Initial release of Detectify Internal Scanning Terraform Module
@@ -40,6 +45,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - AWS Route53 (optional DNS)
 - AWS CloudWatch (optional observability)
 
-[Unreleased]: https://github.com/detectify/terraform-aws-internal-scanning/compare/v1.0.1...HEAD
+[Unreleased]: https://github.com/detectify/terraform-aws-internal-scanning/compare/v1.0.2...HEAD
+[1.0.2]: https://github.com/detectify/terraform-aws-internal-scanning/compare/v1.0.1...v1.0.2
 [1.0.1]: https://github.com/detectify/terraform-aws-internal-scanning/compare/v1.0.0...v1.0.1
 [1.0.0]: https://github.com/detectify/terraform-aws-internal-scanning/releases/tag/v1.0.0

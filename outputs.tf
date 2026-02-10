@@ -10,17 +10,20 @@ output "cluster_id" {
 output "cluster_name" {
   description = "EKS cluster name"
   value       = module.eks.cluster_name
+  depends_on  = [time_sleep.wait_for_cluster]
 }
 
 output "cluster_endpoint" {
   description = "EKS cluster API endpoint"
   value       = module.eks.cluster_endpoint
+  depends_on  = [time_sleep.wait_for_cluster]
 }
 
 output "cluster_certificate_authority_data" {
   description = "Base64 encoded certificate data for cluster authentication"
   value       = module.eks.cluster_certificate_authority_data
   sensitive   = true
+  depends_on  = [time_sleep.wait_for_cluster]
 }
 
 output "cluster_oidc_issuer_url" {
