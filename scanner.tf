@@ -81,9 +81,19 @@ resource "helm_release" "scanner" {
       }
 
       autoscaling = {
-        enabled       = var.enable_autoscaling
-        scanScheduler = var.scan_scheduler_autoscaling
-        scanManager   = var.scan_manager_autoscaling
+        enabled = var.enable_autoscaling
+        scanScheduler = {
+          minReplicas                       = var.scan_scheduler_autoscaling.min_replicas
+          maxReplicas                       = var.scan_scheduler_autoscaling.max_replicas
+          targetCPUUtilizationPercentage    = var.scan_scheduler_autoscaling.target_cpu_utilization_percentage
+          targetMemoryUtilizationPercentage = var.scan_scheduler_autoscaling.target_memory_utilization_percentage
+        }
+        scanManager = {
+          minReplicas                       = var.scan_manager_autoscaling.min_replicas
+          maxReplicas                       = var.scan_manager_autoscaling.max_replicas
+          targetCPUUtilizationPercentage    = var.scan_manager_autoscaling.target_cpu_utilization_percentage
+          targetMemoryUtilizationPercentage = var.scan_manager_autoscaling.target_memory_utilization_percentage
+        }
       }
 
       config = merge(

@@ -7,6 +7,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [1.0.6] - 2026-02-13
+
+### Fixed
+
+- Fix autoscaling configuration not being applied to Helm chart — Terraform snake_case variable keys (`min_replicas`, `max_replicas`, `target_cpu_utilization_percentage`, `target_memory_utilization_percentage`) were passed directly to the Helm release, but the chart expects camelCase (`minReplicas`, `maxReplicas`, `targetCPUUtilizationPercentage`, `targetMemoryUtilizationPercentage`). This caused the chart to silently fall back to its built-in defaults, ignoring user-provided autoscaling settings.
+
 ## [1.0.5] - 2026-02-13
 
 ### Changed
@@ -74,7 +80,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - AWS Route53 (optional DNS)
 - AWS CloudWatch (optional observability)
 
-[Unreleased]: https://github.com/detectify/terraform-aws-internal-scanning/compare/v1.0.5...HEAD
+[Unreleased]: https://github.com/detectify/terraform-aws-internal-scanning/compare/v1.0.6...HEAD
+[1.0.6]: https://github.com/detectify/terraform-aws-internal-scanning/compare/v1.0.5...v1.0.6
 [1.0.5]: https://github.com/detectify/terraform-aws-internal-scanning/compare/v1.0.4...v1.0.5
 [1.0.4]: https://github.com/detectify/terraform-aws-internal-scanning/compare/v1.0.3...v1.0.4
 [1.0.3]: https://github.com/detectify/terraform-aws-internal-scanning/compare/v1.0.2...v1.0.3
