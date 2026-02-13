@@ -7,6 +7,24 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [1.0.5] - 2026-02-13
+
+### Changed
+
+- Default image version from `latest` to `stable`
+- Upgrade AWS Load Balancer Controller Helm chart from 1.8.1 to 1.17.1
+- Upgrade Prometheus Helm chart from 27.49.0 to 27.52.0
+
+### Fixed
+
+- Apply/destroy now works in a single action without sleeps
+
+### Removed
+
+- `var.create_ingress` — ingress is now always created
+- `var.cluster_ready_timeout` and `var.alb_provisioning_timeout` — no longer needed
+- `data.aws_eks_cluster_auth` from module — users must configure this in their root module with an explicit `depends_on` (see updated examples)
+
 ## [1.0.4] - 2026-02-10
 
 ### Fixed
@@ -56,7 +74,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - AWS Route53 (optional DNS)
 - AWS CloudWatch (optional observability)
 
-[Unreleased]: https://github.com/detectify/terraform-aws-internal-scanning/compare/v1.0.4...HEAD
+[Unreleased]: https://github.com/detectify/terraform-aws-internal-scanning/compare/v1.0.5...HEAD
+[1.0.5]: https://github.com/detectify/terraform-aws-internal-scanning/compare/v1.0.4...v1.0.5
 [1.0.4]: https://github.com/detectify/terraform-aws-internal-scanning/compare/v1.0.3...v1.0.4
 [1.0.3]: https://github.com/detectify/terraform-aws-internal-scanning/compare/v1.0.2...v1.0.3
 [1.0.2]: https://github.com/detectify/terraform-aws-internal-scanning/compare/v1.0.1...v1.0.2

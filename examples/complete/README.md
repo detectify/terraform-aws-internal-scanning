@@ -21,6 +21,7 @@ This example demonstrates a full-featured deployment with all options enabled:
 ## Usage
 
 1. Create `terraform.tfvars`:
+
    ```hcl
    environment        = "production"
    aws_region         = "eu-west-1"
@@ -46,32 +47,25 @@ This example demonstrates a full-featured deployment with all options enabled:
    ```
 
 2. Initialize and apply:
+
    ```bash
    terraform init
    terraform plan
    terraform apply
    ```
 
-## Features Demonstrated
+3. Configure kubectl:
 
-### Autoscaling
-- Scan Scheduler: 2-10 replicas, scales at 70% CPU
-- Scan Manager: 1-20 replicas, scales at 80% CPU
+   ```bash
+   # Use the output command
+   aws eks update-kubeconfig --region eu-west-1 --name production-internal-scanning
+   ```
 
-### DNS & TLS
-- Automatic Route53 A record creation
-- ACM certificate with DNS validation
-- HTTPS termination at ALB
+4. Verify pods are running:
 
-### Monitoring
-- CloudWatch Logs and Metrics
-- Prometheus with Pushgateway
-- Prometheus endpoint exposed via ALB
-
-### Security
-- KMS encryption for Kubernetes secrets
-- Private cluster endpoint
-- IAM roles for service accounts (IRSA)
+   ```bash
+   kubectl get pods -A
+   ```
 
 ## Outputs
 

@@ -17,7 +17,6 @@ module "load_balancer_controller_irsa_role" {
       namespace_service_accounts = ["kube-system:aws-load-balancer-controller"]
     }
   }
-
 }
 
 # Deploy AWS Load Balancer Controller via Helm
@@ -25,7 +24,7 @@ resource "helm_release" "aws_load_balancer_controller" {
   name       = "aws-load-balancer-controller"
   repository = "https://aws.github.io/eks-charts"
   chart      = "aws-load-balancer-controller"
-  version    = "1.8.1"
+  version    = "1.17.1"
 
   namespace        = "kube-system"
   create_namespace = false
@@ -51,6 +50,6 @@ resource "helm_release" "aws_load_balancer_controller" {
 
   depends_on = [
     module.eks,
-    time_sleep.wait_for_cluster
+    module.load_balancer_controller_irsa_role,
   ]
 }

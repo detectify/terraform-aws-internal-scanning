@@ -41,21 +41,20 @@ resource "aws_route53_record" "scan_scheduler_cert_validation" {
 
 # DNS record pointing to the ALB
 resource "aws_route53_record" "scan_scheduler" {
-  count = var.create_ingress && var.create_route53_record ? 1 : 0
+  count = var.create_route53_record ? 1 : 0
 
   zone_id = var.route53_zone_id
   name    = var.scanner_url
   type    = "A"
 
   alias {
-    name                   = data.kubernetes_ingress_v1.scan_scheduler_status[0].status[0].load_balancer[0].ingress[0].hostname
+    name                   = kubernetes_ingress_v1.scan_scheduler.status[0].load_balancer[0].ingress[0].hostname
     zone_id                = local.alb_hosted_zone_id
     evaluate_target_health = true
   }
 
   depends_on = [
-    data.kubernetes_ingress_v1.scan_scheduler_status,
-    time_sleep.wait_for_alb
+    kubernetes_ingress_v1.scan_scheduler
   ]
 }
 
@@ -88,12 +87,12 @@ resource "aws_route53_record" "prometheus" {
   type    = "A"
 
   alias {
-    name                   = data.kubernetes_ingress_v1.prometheus_status[0].status[0].load_balancer[0].ingress[0].hostname
+    name                   = kubernetes_ingress_v1.prometheus[0].status[0].load_balancer[0].ingress[0].hostname
     zone_id                = local.alb_hosted_zone_id
     evaluate_target_health = true
   }
 
   depends_on = [
-    data.kubernetes_ingress_v1.prometheus_status
+    kubernetes_ingress_v1.prometheus
   ]
 }

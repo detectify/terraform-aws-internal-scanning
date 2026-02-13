@@ -20,12 +20,6 @@ variable "helm_chart_path" {
   default     = null
 }
 
-variable "create_ingress" {
-  description = "Whether to create Ingress via Terraform. Set to false if using Helm chart's ingress."
-  type        = bool
-  default     = true
-}
-
 #---------------------------------------------------------------
 # Core Configuration
 #---------------------------------------------------------------
@@ -217,7 +211,7 @@ variable "image_registry_path" {
 variable "internal_scanning_version" {
   description = "Version tag for all scanner images (scan-scheduler, scan-manager, scan-worker, chrome-controller, chrome-container). Defaults to 'latest' to ensure customers always have the newest security tests. For production stability, consider pinning to a specific version (e.g., 'v1.0.0')."
   type        = string
-  default     = "latest"
+  default     = "stable"
 }
 
 variable "registry_username" {
@@ -532,21 +526,5 @@ variable "cluster_admin_role_arns" {
   description = "IAM role ARNs to grant cluster admin access (for AWS Console/CLI access)"
   type        = list(string)
   default     = []
-}
-
-#---------------------------------------------------------------
-# Timing Configuration
-#---------------------------------------------------------------
-
-variable "cluster_ready_timeout" {
-  description = "Time to wait for EKS cluster to be fully ready before deploying workloads (includes IAM propagation)"
-  type        = string
-  default     = "120s"
-}
-
-variable "alb_provisioning_timeout" {
-  description = "Time to wait for ALB to be fully provisioned before creating DNS records"
-  type        = string
-  default     = "120s"
 }
 

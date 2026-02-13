@@ -11,12 +11,8 @@ This example demonstrates the minimum configuration required to deploy Detectify
 
 ## Usage
 
-1. Copy `terraform.tfvars.example` to `terraform.tfvars`:
-   ```bash
-   cp terraform.tfvars.example terraform.tfvars
-   ```
+1. Create `terraform.tfvars` with your values:
 
-2. Edit `terraform.tfvars` with your values:
    ```hcl
    environment        = "production"
    aws_region         = "eu-west-1"
@@ -32,17 +28,25 @@ This example demonstrates the minimum configuration required to deploy Detectify
    registry_password = "your-password"
    ```
 
-3. Initialize and apply:
+2. Initialize and apply:
+
    ```bash
    terraform init
    terraform plan
    terraform apply
    ```
 
-4. Configure kubectl:
+3. Configure kubectl:
+
    ```bash
    # Use the output command
    aws eks update-kubeconfig --region eu-west-1 --name production-internal-scanning
+   ```
+
+4. Verify pods are running:
+
+   ```bash
+   kubectl get pods -A
    ```
 
 ## Inputs

@@ -18,8 +18,17 @@ provider "aws" {
   }
 }
 
+# EKS authentication - retrieves token for Kubernetes and Helm providers
 data "aws_eks_cluster_auth" "cluster" {
   name = module.internal_scanner.cluster_name
+
+  depends_on = [
+    # Explicit dependency must be set for data resources or it'll be
+    # evaluated as soon as the cluster name is known rather than waiting
+    # until the cluster is deployed.
+    # https://developer.hashicorp.com/terraform/language/data-sources#dependencies
+    module.internal_scanner.cluster_name,
+  ]
 }
 
 provider "kubernetes" {
@@ -29,7 +38,7 @@ provider "kubernetes" {
 }
 
 provider "helm" {
-  kubernetes {
+  kubernetes = {
     host                   = module.internal_scanner.cluster_endpoint
     cluster_ca_certificate = base64decode(module.internal_scanner.cluster_certificate_authority_data)
     token                  = data.aws_eks_cluster_auth.cluster.token

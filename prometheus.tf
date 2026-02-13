@@ -18,7 +18,6 @@ resource "kubernetes_namespace_v1" "monitoring" {
 
   depends_on = [
     module.eks,
-    time_sleep.wait_for_cluster
   ]
 }
 
@@ -29,7 +28,7 @@ resource "helm_release" "prometheus" {
   repository = "https://prometheus-community.github.io/helm-charts"
   chart      = "prometheus"
   namespace  = kubernetes_namespace_v1.monitoring[0].metadata[0].name
-  version    = "27.49.0"
+  version    = "27.52.0"
 
   values = [
     yamlencode({
@@ -136,6 +135,8 @@ resource "aws_acm_certificate_validation" "prometheus" {
 resource "kubernetes_ingress_v1" "prometheus" {
   count = var.enable_prometheus ? 1 : 0
 
+  wait_for_load_balancer = true
+
   metadata {
     name      = "prometheus"
     namespace = kubernetes_namespace_v1.monitoring[0].metadata[0].name
@@ -180,9 +181,8 @@ resource "kubernetes_ingress_v1" "prometheus" {
   }
 
   depends_on = [
-    module.eks,                          # Wait for EKS cluster and access entries
+    module.eks, # Wait for EKS cluster and access entries
     helm_release.aws_load_balancer_controller,
-    helm_release.prometheus[0],
-    time_sleep.wait_for_alb_cleanup,     # On destroy: wait for ALB cleanup before removing controller
+    helm_release.prometheus,
   ]
 }
