@@ -288,6 +288,24 @@ variable "redis_storage_size" {
   default     = "8Gi"
 }
 
+variable "redis_storage_class" {
+  description = "Kubernetes StorageClass for the Redis PVC. Defaults to ebs-gp3 (EKS Auto Mode with EBS CSI driver)."
+  type        = string
+  default     = "ebs-gp3"
+}
+
+variable "deploy_redis" {
+  description = "Deploy in-cluster Redis. Set to false when using managed Redis (e.g., ElastiCache, Memorystore) and override redis_url."
+  type        = bool
+  default     = true
+}
+
+variable "redis_url" {
+  description = "Redis connection URL. Override when using external/managed Redis. Include credentials and use rediss:// for TLS (e.g., rediss://user:pass@my-redis.example.com:6379)."
+  type        = string
+  default     = "redis://redis:6379"
+}
+
 variable "enable_autoscaling" {
   description = "Enable Horizontal Pod Autoscaler (HPA) for scan-scheduler and scan-manager"
   type        = bool

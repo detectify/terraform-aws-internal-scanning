@@ -108,7 +108,7 @@ module "eks" {
       coredns = {
         resolve_conflicts_on_create = "OVERWRITE"
         resolve_conflicts_on_update = "OVERWRITE"
-        addon_version               = "v1.13.1-eksbuild.1"
+        addon_version               = "v1.13.2-eksbuild.1"
       }
       kube-proxy = {
         resolve_conflicts_on_create = "OVERWRITE"
@@ -119,8 +119,8 @@ module "eks" {
         resolve_conflicts_on_create = "OVERWRITE"
         resolve_conflicts_on_update = "OVERWRITE"
         service_account_role_arn    = aws_iam_role.vpc_cni.arn
-        addon_version               = "v1.21.1-eksbuild.1"
-      }
+        addon_version               = "v1.21.1-eksbuild.3"
+      },
     },
     var.enable_cloudwatch_observability ? {
       amazon-cloudwatch-observability = {

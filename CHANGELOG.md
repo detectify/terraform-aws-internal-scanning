@@ -7,6 +7,22 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [1.0.7] - 2026-02-17
+
+### Added
+- Redis persistence with PVC, `storageClass` variable (defaults to `ebs-gp3`), and `deploy_redis` toggle
+- `ebs-gp3` StorageClass resource (EBS CSI driver, gp3 volumes, `WaitForFirstConsumer` binding)
+- `redis_url` variable to support external/managed Redis (e.g., ElastiCache)
+- `Recreate` deployment strategy for Redis when persistence is enabled (prevents RWO PVC deadlock)
+- `wait-for-redis` init containers on scan-scheduler and scan-manager
+- PriorityClass for redis and scan-scheduler to protect critical components under resource pressure
+- Lifecycle precondition: `redis_url` must be overridden when `deploy_redis` is false
+- `cluster_primary_security_group_id` output
+
+### Changed
+- Bump coredns addon from v1.13.1-eksbuild.1 to v1.13.2-eksbuild.1
+- Bump vpc-cni addon from v1.21.1-eksbuild.1 to v1.21.1-eksbuild.3
+
 ## [1.0.6] - 2026-02-13
 
 ### Fixed
@@ -80,7 +96,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - AWS Route53 (optional DNS)
 - AWS CloudWatch (optional observability)
 
-[Unreleased]: https://github.com/detectify/terraform-aws-internal-scanning/compare/v1.0.6...HEAD
+[Unreleased]: https://github.com/detectify/terraform-aws-internal-scanning/compare/v1.0.7...HEAD
+[1.0.7]: https://github.com/detectify/terraform-aws-internal-scanning/compare/v1.0.6...v1.0.7
 [1.0.6]: https://github.com/detectify/terraform-aws-internal-scanning/compare/v1.0.5...v1.0.6
 [1.0.5]: https://github.com/detectify/terraform-aws-internal-scanning/compare/v1.0.4...v1.0.5
 [1.0.4]: https://github.com/detectify/terraform-aws-internal-scanning/compare/v1.0.3...v1.0.4

@@ -18,6 +18,13 @@ resource "helm_release" "scanner" {
   wait    = true
   timeout = 600
 
+  lifecycle {
+    precondition {
+      condition     = var.deploy_redis || var.redis_url != "redis://redis:6379"
+      error_message = "redis_url must be overridden when deploy_redis is false."
+    }
+  }
+
   values = [
     yamlencode({
       # Registry URL with full path where images are stored
@@ -99,7 +106,7 @@ resource "helm_release" "scanner" {
       config = merge(
         {
           port               = "3000"
-          redisUrl           = "redis://redis:6379"
+          redisUrl           = var.redis_url
           licenseKey         = var.license_key
           licenseServerUrl   = var.license_server_url
           connectorServerUrl = var.connector_server_url
@@ -123,6 +130,12 @@ resource "helm_release" "scanner" {
       )
 
       redis = {
+        deploy = var.deploy_redis
+        persistence = {
+          enabled      = var.deploy_redis
+          size         = var.redis_storage_size
+          storageClass = var.redis_storage_class
+        }
         storage = {
           size = var.redis_storage_size
         }
@@ -140,6 +153,32 @@ resource "helm_release" "scanner" {
       }
     })
   ]
+
+  depends_on = [
+    module.eks,
+    kubernetes_storage_class_v1.ebs_gp3,
+  ]
+}
+
+#---------------------------------------------------------------
+# StorageClass for EBS CSI
+#---------------------------------------------------------------
+
+resource "kubernetes_storage_class_v1" "ebs_gp3" {
+  count = var.deploy_redis ? 1 : 0
+
+  metadata {
+    name = "ebs-gp3"
+  }
+
+  storage_provisioner    = "ebs.csi.eks.amazonaws.com"
+  reclaim_policy         = "Delete"
+  volume_binding_mode    = "WaitForFirstConsumer"
+  allow_volume_expansion = true
+
+  parameters = {
+    type = "gp3"
+  }
 
   depends_on = [
     module.eks,
