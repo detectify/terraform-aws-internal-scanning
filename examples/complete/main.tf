@@ -59,6 +59,10 @@ module "internal_scanner" {
   private_subnet_ids = var.private_subnet_ids
   alb_inbound_cidrs  = var.alb_inbound_cidrs
 
+  # Public API access (for users without VPN)
+  # cluster_endpoint_public_access       = true
+  # cluster_endpoint_public_access_cidrs = ["203.0.113.0/24"]  # Restrict to known IPs
+
   # Scanner Endpoint with DNS
   scanner_url           = "scanner.${var.environment}.${var.domain_name}"
   create_route53_record = true

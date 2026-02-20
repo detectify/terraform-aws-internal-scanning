@@ -71,6 +71,40 @@ variable "private_subnet_ids" {
   }
 }
 
+variable "cluster_endpoint_public_access" {
+  description = <<-EOT
+    Enable public access to the EKS cluster API endpoint. When true, the Kubernetes
+    API is reachable over the internet (subject to cluster_endpoint_public_access_cidrs).
+
+    Use this when users need kubectl/deployment access without VPN connectivity.
+    Private access remains enabled regardless of this setting.
+
+    IMPORTANT: Even with public access, all requests still require valid IAM
+    authentication. Restrict access further using cluster_endpoint_public_access_cidrs.
+  EOT
+  type        = bool
+  default     = false
+}
+
+variable "cluster_endpoint_public_access_cidrs" {
+  description = <<-EOT
+    CIDR blocks allowed to access the EKS cluster API endpoint over the public internet.
+    Only applies when cluster_endpoint_public_access = true.
+
+    IMPORTANT: When enabling public access, restrict this to specific IPs instead of
+    using the default 0.0.0.0/0. AWS requires at least one CIDR in this list.
+
+    Example: ["203.0.113.0/24", "198.51.100.10/32"]
+  EOT
+  type        = list(string)
+  default     = ["0.0.0.0/0"]
+
+  validation {
+    condition     = length(var.cluster_endpoint_public_access_cidrs) > 0
+    error_message = "At least one CIDR block is required. AWS EKS does not accept an empty list."
+  }
+}
+
 variable "cluster_security_group_additional_rules" {
   description = <<-EOT
     Additional security group rules for the EKS cluster API endpoint.
@@ -272,12 +306,6 @@ variable "scan_manager_replicas" {
 
 variable "chrome_controller_replicas" {
   description = "Number of Chrome Controller replicas"
-  type        = number
-  default     = 1
-}
-
-variable "redis_replicas" {
-  description = "Number of Redis replicas"
   type        = number
   default     = 1
 }

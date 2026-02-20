@@ -7,6 +7,17 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [1.1.0] - 2026-02-20
+
+### Added
+
+- Optional public access for EKS cluster API endpoint via `cluster_endpoint_public_access` variable (default: `false`), allowing users without VPN to manage the cluster with `kubectl` and deploy via Terraform
+- `cluster_endpoint_public_access_cidrs` variable to restrict which IPs can reach the public endpoint (default: `["0.0.0.0/0"]` — should be restricted to specific IPs when public access is enabled)
+
+### Removed
+
+- Removed option to set Redis replicas. It is now always 1 if enabled.
+
 ## [1.0.7] - 2026-02-17
 
 ### Added
@@ -96,7 +107,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - AWS Route53 (optional DNS)
 - AWS CloudWatch (optional observability)
 
-[Unreleased]: https://github.com/detectify/terraform-aws-internal-scanning/compare/v1.0.7...HEAD
+[Unreleased]: https://github.com/detectify/terraform-aws-internal-scanning/compare/v1.1.0...HEAD
+[1.1.0]: https://github.com/detectify/terraform-aws-internal-scanning/compare/v1.0.7...v1.1.0
 [1.0.7]: https://github.com/detectify/terraform-aws-internal-scanning/compare/v1.0.6...v1.0.7
 [1.0.6]: https://github.com/detectify/terraform-aws-internal-scanning/compare/v1.0.5...v1.0.6
 [1.0.5]: https://github.com/detectify/terraform-aws-internal-scanning/compare/v1.0.4...v1.0.5

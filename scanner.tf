@@ -77,7 +77,6 @@ resource "helm_release" "scanner" {
         scanScheduler    = var.scan_scheduler_replicas
         scanManager      = var.scan_manager_replicas
         chromeController = var.chrome_controller_replicas
-        redis            = var.redis_replicas
       }
 
       resources = {

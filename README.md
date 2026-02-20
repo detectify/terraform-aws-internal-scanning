@@ -157,6 +157,7 @@ module "internal_scanner" {
 | [kubernetes_ingress_v1.prometheus](https://registry.terraform.io/providers/hashicorp/kubernetes/latest/docs/resources/ingress_v1) | resource |
 | [kubernetes_ingress_v1.scan_scheduler](https://registry.terraform.io/providers/hashicorp/kubernetes/latest/docs/resources/ingress_v1) | resource |
 | [kubernetes_namespace_v1.monitoring](https://registry.terraform.io/providers/hashicorp/kubernetes/latest/docs/resources/namespace_v1) | resource |
+| [kubernetes_storage_class_v1.ebs_gp3](https://registry.terraform.io/providers/hashicorp/kubernetes/latest/docs/resources/storage_class_v1) | resource |
 | [aws_caller_identity.current](https://registry.terraform.io/providers/hashicorp/aws/latest/docs/data-sources/caller_identity) | data source |
 | [aws_elb_hosted_zone_id.main](https://registry.terraform.io/providers/hashicorp/aws/latest/docs/data-sources/elb_hosted_zone_id) | data source |
 
@@ -167,13 +168,13 @@ module "internal_scanner" {
 | <a name="input_acm_certificate_arn"></a> [acm\_certificate\_arn](#input\_acm\_certificate\_arn) | ARN of an existing ACM certificate. Required when create\_acm\_certificate = false. | `string` | `null` | no |
 | <a name="input_acm_validation_zone_id"></a> [acm\_validation\_zone\_id](#input\_acm\_validation\_zone\_id) | Route53 hosted zone ID for ACM certificate DNS validation.<br/>Defaults to route53\_zone\_id if not specified.<br/><br/>IMPORTANT: Must be a PUBLIC hosted zone - ACM certificate validation requires<br/>publicly resolvable DNS records. If route53\_zone\_id is a private zone, you must<br/>provide a separate public zone here, or use create\_acm\_certificate = false with<br/>your own certificate. | `string` | `null` | no |
 | <a name="input_alb_inbound_cidrs"></a> [alb\_inbound\_cidrs](#input\_alb\_inbound\_cidrs) | CIDR blocks allowed to access the scanner API endpoint via the internal ALB.<br/><br/>Typically includes:<br/>- Your VPC CIDR (required - scanner components communicate via the ALB)<br/>- VPN/corporate network CIDRs (for administrative access and debugging)<br/><br/>Example: ["10.0.0.0/16", "172.16.0.0/12"] | `list(string)` | n/a | yes |
-| <a name="input_alb_provisioning_timeout"></a> [alb\_provisioning\_timeout](#input\_alb\_provisioning\_timeout) | Time to wait for ALB to be fully provisioned before creating DNS records | `string` | `"120s"` | no |
 | <a name="input_aws_region"></a> [aws\_region](#input\_aws\_region) | AWS Region where resources will be deployed | `string` | `"us-east-1"` | no |
 | <a name="input_chrome_controller_replicas"></a> [chrome\_controller\_replicas](#input\_chrome\_controller\_replicas) | Number of Chrome Controller replicas | `number` | `1` | no |
 | <a name="input_chrome_controller_resources"></a> [chrome\_controller\_resources](#input\_chrome\_controller\_resources) | Resource requests and limits for Chrome Controller | <pre>object({<br/>    requests = object({<br/>      cpu    = string<br/>      memory = string<br/>    })<br/>    limits = object({<br/>      cpu    = string<br/>      memory = string<br/>    })<br/>  })</pre> | <pre>{<br/>  "limits": {<br/>    "cpu": "1000m",<br/>    "memory": "2Gi"<br/>  },<br/>  "requests": {<br/>    "cpu": "200m",<br/>    "memory": "512Mi"<br/>  }<br/>}</pre> | no |
 | <a name="input_cluster_admin_role_arns"></a> [cluster\_admin\_role\_arns](#input\_cluster\_admin\_role\_arns) | IAM role ARNs to grant cluster admin access (for AWS Console/CLI access) | `list(string)` | `[]` | no |
+| <a name="input_cluster_endpoint_public_access"></a> [cluster\_endpoint\_public\_access](#input\_cluster\_endpoint\_public\_access) | Enable public access to the EKS cluster API endpoint. When true, the Kubernetes<br/>API is reachable over the internet (subject to cluster\_endpoint\_public\_access\_cidrs).<br/><br/>Use this when users need kubectl/deployment access without VPN connectivity.<br/>Private access remains enabled regardless of this setting.<br/><br/>IMPORTANT: Even with public access, all requests still require valid IAM<br/>authentication. Restrict access further using cluster\_endpoint\_public\_access\_cidrs. | `bool` | `false` | no |
+| <a name="input_cluster_endpoint_public_access_cidrs"></a> [cluster\_endpoint\_public\_access\_cidrs](#input\_cluster\_endpoint\_public\_access\_cidrs) | CIDR blocks allowed to access the EKS cluster API endpoint over the public internet.<br/>Only applies when cluster\_endpoint\_public\_access = true.<br/><br/>IMPORTANT: When enabling public access, restrict this to specific IPs instead of<br/>using the default 0.0.0.0/0. AWS requires at least one CIDR in this list.<br/><br/>Example: ["203.0.113.0/24", "198.51.100.10/32"] | `list(string)` | <pre>[<br/>  "0.0.0.0/0"<br/>]</pre> | no |
 | <a name="input_cluster_name_prefix"></a> [cluster\_name\_prefix](#input\_cluster\_name\_prefix) | Prefix for EKS cluster name (will be combined with environment) | `string` | `"internal-scanning"` | no |
-| <a name="input_cluster_ready_timeout"></a> [cluster\_ready\_timeout](#input\_cluster\_ready\_timeout) | Time to wait for EKS cluster to be fully ready before deploying workloads (includes IAM propagation) | `string` | `"120s"` | no |
 | <a name="input_cluster_security_group_additional_rules"></a> [cluster\_security\_group\_additional\_rules](#input\_cluster\_security\_group\_additional\_rules) | Additional security group rules for the EKS cluster API endpoint.<br/><br/>Required when Terraform runs from a network that doesn't have direct access to the<br/>private subnets (e.g., local machine via VPN, CI/CD pipeline in another VPC, bastion host).<br/>Add an ingress rule for port 443 from the CIDR where Terraform is running.<br/><br/>Example:<br/>  cluster\_security\_group\_additional\_rules = {<br/>    terraform\_access = {<br/>      description = "Allow Terraform access from VPN"<br/>      type        = "ingress"<br/>      from\_port   = 443<br/>      to\_port     = 443<br/>      protocol    = "tcp"<br/>      cidr\_blocks = ["10.0.0.0/8"]  # Your VPN/CI network CIDR<br/>    }<br/>  } | `map(any)` | `{}` | no |
 | <a name="input_cluster_version"></a> [cluster\_version](#input\_cluster\_version) | Kubernetes version for EKS cluster | `string` | `"1.35"` | no |
 | <a name="input_completed_scans_poll_interval_seconds"></a> [completed\_scans\_poll\_interval\_seconds](#input\_completed\_scans\_poll\_interval\_seconds) | Interval in seconds for checking if running scans have completed. Minimum: 10 seconds. Lower values provide faster result reporting but increase Redis load. | `number` | `60` | no |
@@ -181,6 +182,7 @@ module "internal_scanner" {
 | <a name="input_connector_server_url"></a> [connector\_server\_url](#input\_connector\_server\_url) | Connector service URL for scanner communication. Defaults to production connector. | `string` | `"https://connector.detectify.com"` | no |
 | <a name="input_create_acm_certificate"></a> [create\_acm\_certificate](#input\_create\_acm\_certificate) | Create and validate an ACM certificate for the scanner endpoint. Set to false to use an existing certificate. | `bool` | `true` | no |
 | <a name="input_create_route53_record"></a> [create\_route53\_record](#input\_create\_route53\_record) | Create Route53 DNS A record pointing scanner\_url to the ALB. Set to false if managing DNS externally. | `bool` | `false` | no |
+| <a name="input_deploy_redis"></a> [deploy\_redis](#input\_deploy\_redis) | Deploy in-cluster Redis. Set to false when using managed Redis (e.g., ElastiCache, Memorystore) and override redis\_url. | `bool` | `true` | no |
 | <a name="input_enable_autoscaling"></a> [enable\_autoscaling](#input\_enable\_autoscaling) | Enable Horizontal Pod Autoscaler (HPA) for scan-scheduler and scan-manager | `bool` | `false` | no |
 | <a name="input_enable_cloudwatch_observability"></a> [enable\_cloudwatch\_observability](#input\_enable\_cloudwatch\_observability) | Enable Amazon CloudWatch Observability addon for logs and metrics | `bool` | `true` | no |
 | <a name="input_enable_cluster_creator_admin_permissions"></a> [enable\_cluster\_creator\_admin\_permissions](#input\_enable\_cluster\_creator\_admin\_permissions) | Whether to grant the cluster creator admin permissions. Set to true to allow the creator to manage the cluster, false to manage all access manually via cluster\_admin\_role\_arns. | `bool` | `true` | no |
@@ -199,9 +201,10 @@ module "internal_scanner" {
 | <a name="input_max_scan_duration_seconds"></a> [max\_scan\_duration\_seconds](#input\_max\_scan\_duration\_seconds) | Maximum duration for a single scan in seconds. If not specified, defaults to 172800 (2 days). Only set this if you need to override the default. | `number` | `null` | no |
 | <a name="input_private_subnet_ids"></a> [private\_subnet\_ids](#input\_private\_subnet\_ids) | Private subnet IDs for EKS nodes and internal ALB | `list(string)` | n/a | yes |
 | <a name="input_prometheus_url"></a> [prometheus\_url](#input\_prometheus\_url) | Full URL for Prometheus endpoint (required if enable\_prometheus is true) | `string` | `null` | no |
-| <a name="input_redis_replicas"></a> [redis\_replicas](#input\_redis\_replicas) | Number of Redis replicas | `number` | `1` | no |
 | <a name="input_redis_resources"></a> [redis\_resources](#input\_redis\_resources) | Resource requests and limits for Redis | <pre>object({<br/>    requests = object({<br/>      cpu    = string<br/>      memory = string<br/>    })<br/>    limits = object({<br/>      cpu    = string<br/>      memory = string<br/>    })<br/>  })</pre> | <pre>{<br/>  "limits": {<br/>    "cpu": "500m",<br/>    "memory": "512Mi"<br/>  },<br/>  "requests": {<br/>    "cpu": "100m",<br/>    "memory": "128Mi"<br/>  }<br/>}</pre> | no |
+| <a name="input_redis_storage_class"></a> [redis\_storage\_class](#input\_redis\_storage\_class) | Kubernetes StorageClass for the Redis PVC. Defaults to ebs-gp3 (EKS Auto Mode with EBS CSI driver). | `string` | `"ebs-gp3"` | no |
 | <a name="input_redis_storage_size"></a> [redis\_storage\_size](#input\_redis\_storage\_size) | Redis persistent volume size | `string` | `"8Gi"` | no |
+| <a name="input_redis_url"></a> [redis\_url](#input\_redis\_url) | Redis connection URL. Override when using external/managed Redis. Include credentials and use rediss:// for TLS (e.g., rediss://user:pass@my-redis.example.com:6379). | `string` | `"redis://redis:6379"` | no |
 | <a name="input_registry_password"></a> [registry\_password](#input\_registry\_password) | Docker registry password for image pulls | `string` | n/a | yes |
 | <a name="input_registry_server"></a> [registry\_server](#input\_registry\_server) | Docker registry server hostname for authentication and image pulls (e.g., registry.detectify.com) | `string` | `"registry.detectify.com"` | no |
 | <a name="input_registry_username"></a> [registry\_username](#input\_registry\_username) | Docker registry username for image pulls | `string` | n/a | yes |
@@ -231,6 +234,7 @@ module "internal_scanner" {
 | <a name="output_cluster_id"></a> [cluster\_id](#output\_cluster\_id) | EKS cluster ID |
 | <a name="output_cluster_name"></a> [cluster\_name](#output\_cluster\_name) | EKS cluster name |
 | <a name="output_cluster_oidc_issuer_url"></a> [cluster\_oidc\_issuer\_url](#output\_cluster\_oidc\_issuer\_url) | The URL on the EKS cluster OIDC Issuer |
+| <a name="output_cluster_primary_security_group_id"></a> [cluster\_primary\_security\_group\_id](#output\_cluster\_primary\_security\_group\_id) | Cluster security group that was created by Amazon EKS for the cluster. Managed node groups use this security group for control-plane-to-data-plane communication. Referred to as 'Cluster security group' in the EKS console |
 | <a name="output_cluster_security_group_id"></a> [cluster\_security\_group\_id](#output\_cluster\_security\_group\_id) | Security group ID attached to the EKS cluster |
 | <a name="output_kms_key_arn"></a> [kms\_key\_arn](#output\_kms\_key\_arn) | ARN of the KMS key used for EKS secrets encryption |
 | <a name="output_kms_key_id"></a> [kms\_key\_id](#output\_kms\_key\_id) | ID of the KMS key used for EKS secrets encryption (only if created by module) |
@@ -343,6 +347,27 @@ If you manage DNS outside of Route53 (`create_route53_record = false`):
    - Create the CNAME records in your DNS provider
    - ACM will automatically validate once records are detected
 
+## Public EKS API Access
+
+By default, the EKS cluster API endpoint is only accessible from within the VPC (private access). If your users don't have VPN connectivity to the VPC, you can enable public access:
+
+```hcl
+module "internal_scanner" {
+  # ...
+
+  # Enable public Kubernetes API access
+  cluster_endpoint_public_access       = true
+  cluster_endpoint_public_access_cidrs = ["198.51.100.0/24"]  # Your office/CI IP range
+}
+```
+
+When both private and public access are enabled:
+
+- **From inside the VPC** (EKS nodes, ALB controller): traffic routes over the private endpoint
+- **From outside the VPC** (your laptop, CI/CD): traffic routes over the public endpoint
+
+IAM authentication is always required regardless of endpoint type. Restrict `cluster_endpoint_public_access_cidrs` to known IP ranges for defense in depth.
+
 ## Autoscaling
 
 The module supports Horizontal Pod Autoscaling (HPA) for scan-scheduler and scan-manager:
@@ -396,7 +421,7 @@ kubectl logs -n scanner deployment/scan-manager
 
 | Issue | Solution |
 |-------|----------|
-| Terraform hangs or times out connecting to EKS | Terraform needs network access to the EKS API endpoint (port 443). If running from a VPN, CI/CD pipeline, or bastion host outside the VPC, add `cluster_security_group_additional_rules` with an ingress rule for your network CIDR. See variable description for example. |
+| Terraform hangs or times out connecting to EKS | Terraform needs network access to the EKS API endpoint (port 443). **Option 1 (no VPN):** Set `cluster_endpoint_public_access = true` and restrict `cluster_endpoint_public_access_cidrs` to your IP. **Option 2 (VPN/peering):** Add `cluster_security_group_additional_rules` with an ingress rule for your network CIDR. See variable descriptions for examples. |
 | Pods stuck in `ImagePullBackOff` | Verify registry credentials are correct |
 | ALB not provisioning | Check subnet tags and IAM permissions |
 | Certificate validation failing | Ensure ACM validation DNS zone is public |

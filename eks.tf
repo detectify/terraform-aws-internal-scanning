@@ -68,8 +68,9 @@ module "eks" {
   cluster_name    = local.cluster_name
   cluster_version = var.cluster_version
 
-  cluster_endpoint_private_access = true
-  cluster_endpoint_public_access  = false
+  cluster_endpoint_private_access      = true
+  cluster_endpoint_public_access       = var.cluster_endpoint_public_access
+  cluster_endpoint_public_access_cidrs = var.cluster_endpoint_public_access_cidrs
 
   # KMS encryption for Kubernetes secrets at rest (always enabled)
   cluster_encryption_config = {
