@@ -7,6 +7,18 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [1.2.0] - 2026-02-24
+
+### Changed
+
+- IAM role names now use the full cluster name (`{environment}-{cluster_name_prefix}`) as prefix instead of just `{environment}`. This makes all IAM roles consistent with the EKS cluster name they belong to, and enables deploying multiple scanners in the same AWS account — either across regions or within the same region — by setting a unique `cluster_name_prefix` per deployment.
+
+### Migration
+
+> **Breaking change:** Existing deployments will have their IAM roles destroyed and recreated with new names on the next `terraform apply`. This causes brief disruption during the apply (VPC CNI, CloudWatch addon, ALB controller and EKS nodes will re-associate with the new roles). Plan for a maintenance window or accept the brief downtime.
+>
+> Affected roles: `{env}-eks-auto`, `{env}-vpc-cni-*`, `{env}-cw-*`, `{env}-alb-controller` → renamed to `{env}-{cluster_name_prefix}-*`.
+
 ## [1.1.0] - 2026-02-20
 
 ### Added
@@ -107,7 +119,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - AWS Route53 (optional DNS)
 - AWS CloudWatch (optional observability)
 
-[Unreleased]: https://github.com/detectify/terraform-aws-internal-scanning/compare/v1.1.0...HEAD
+[Unreleased]: https://github.com/detectify/terraform-aws-internal-scanning/compare/v1.2.0...HEAD
+[1.2.0]: https://github.com/detectify/terraform-aws-internal-scanning/compare/v1.1.0...v1.2.0
 [1.1.0]: https://github.com/detectify/terraform-aws-internal-scanning/compare/v1.0.7...v1.1.0
 [1.0.7]: https://github.com/detectify/terraform-aws-internal-scanning/compare/v1.0.6...v1.0.7
 [1.0.6]: https://github.com/detectify/terraform-aws-internal-scanning/compare/v1.0.5...v1.0.6

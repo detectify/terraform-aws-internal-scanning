@@ -92,7 +92,7 @@ module "eks" {
   }
 
   # Shorten IAM role name to avoid 38-character limit
-  node_iam_role_name            = "${var.environment}-eks-auto"
+  node_iam_role_name            = "${local.cluster_name}-eks-auto"
   node_iam_role_use_name_prefix = false
 
   # Required for EKS Auto Mode - must be false when cluster_compute_config is enabled
@@ -159,7 +159,7 @@ module "eks" {
 # IAM Role for VPC CNI
 #---------------------------------------------------------------
 resource "aws_iam_role" "vpc_cni" {
-  name_prefix = format("%s-vpc-cni-", var.environment)
+  name_prefix = format("%s-vpc-cni-", local.cluster_name)
   description = "The IAM role for VPC CNI addon"
 
   assume_role_policy = jsonencode({
@@ -193,7 +193,7 @@ resource "aws_iam_role_policy_attachment" "vpc_cni_policy_attachment" {
 resource "aws_iam_role" "cloudwatch_observability_role" {
   count = var.enable_cloudwatch_observability ? 1 : 0
 
-  name_prefix = format("%s-cw-", var.environment)
+  name_prefix = format("%s-cw-", local.cluster_name)
   description = "The IAM role for amazon-cloudwatch-observability addon"
 
   assume_role_policy = jsonencode({
