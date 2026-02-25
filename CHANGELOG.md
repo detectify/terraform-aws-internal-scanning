@@ -7,6 +7,13 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [1.2.1] - 2026-02-25
+
+### Fixed
+
+- IAM role names now use `cluster_name_prefix` instead of the full cluster name (`{environment}-{cluster_name_prefix}`), keeping names short and consistent regardless of environment name length.
+- Added validation on `cluster_name_prefix`: max 29 characters (so the EKS node IAM role `{cluster_name_prefix}-eks-auto` stays within the 38-character EKS limit), and must contain only lowercase letters, numbers, and hyphens.
+
 ## [1.2.0] - 2026-02-24
 
 ### Changed
@@ -119,7 +126,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - AWS Route53 (optional DNS)
 - AWS CloudWatch (optional observability)
 
-[Unreleased]: https://github.com/detectify/terraform-aws-internal-scanning/compare/v1.2.0...HEAD
+[Unreleased]: https://github.com/detectify/terraform-aws-internal-scanning/compare/v1.2.1...HEAD
+[1.2.1]: https://github.com/detectify/terraform-aws-internal-scanning/compare/v1.2.0...v1.2.1
 [1.2.0]: https://github.com/detectify/terraform-aws-internal-scanning/compare/v1.1.0...v1.2.0
 [1.1.0]: https://github.com/detectify/terraform-aws-internal-scanning/compare/v1.0.7...v1.1.0
 [1.0.7]: https://github.com/detectify/terraform-aws-internal-scanning/compare/v1.0.6...v1.0.7

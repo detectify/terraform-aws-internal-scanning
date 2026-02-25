@@ -41,9 +41,19 @@ variable "aws_region" {
 }
 
 variable "cluster_name_prefix" {
-  description = "Prefix for EKS cluster name (will be combined with environment)"
+  description = "Prefix for the EKS cluster name and IAM role names. Must be unique per AWS account deployment. For multi-region deployments, include the region (e.g., \"internal-scanning-eu-west-1\")."
   type        = string
   default     = "internal-scanning"
+
+  validation {
+    condition     = can(regex("^[a-z0-9-]+$", var.cluster_name_prefix))
+    error_message = "cluster_name_prefix must contain only lowercase letters, numbers, and hyphens."
+  }
+
+  validation {
+    condition     = length(var.cluster_name_prefix) <= 29
+    error_message = "cluster_name_prefix must be 29 characters or fewer. The EKS node IAM role is named '{cluster_name_prefix}-eks-auto' and must not exceed 38 characters."
+  }
 }
 
 variable "cluster_version" {
