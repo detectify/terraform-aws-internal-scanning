@@ -4,13 +4,11 @@
 # Detectify Internal Scanning on AWS EKS.
 
 provider "aws" {
-  region = var.aws_region
+  region = "eu-west-1"
 
   default_tags {
     tags = {
-      Project     = "detectify-internal-scanning"
-      Environment = var.environment
-      ManagedBy   = "terraform"
+      Project = "detectify-internal-scanning"
     }
   }
 }
@@ -43,20 +41,12 @@ provider "helm" {
 }
 
 module "internal_scanner" {
-  source = "detectify/detectify-internal-scanning/aws"
+  source = "detectify/internal-scanning/aws"
   # version = "~> 1.0"  # Uncomment when using from registry
-
-  # Core Configuration
-  environment = var.environment
-  aws_region  = var.aws_region
 
   # Network Configuration
   vpc_id             = var.vpc_id
   private_subnet_ids = var.private_subnet_ids
-  alb_inbound_cidrs  = var.alb_inbound_cidrs
-
-  # Scanner Endpoint
-  scanner_url = var.scanner_url
 
   # License Configuration (provided by Detectify)
   license_key       = var.license_key
@@ -65,11 +55,6 @@ module "internal_scanner" {
   # Registry Authentication (provided by Detectify)
   registry_username = var.registry_username
   registry_password = var.registry_password
-}
-
-output "scanner_url" {
-  description = "Scanner API endpoint URL"
-  value       = module.internal_scanner.scanner_url
 }
 
 output "kubeconfig_command" {

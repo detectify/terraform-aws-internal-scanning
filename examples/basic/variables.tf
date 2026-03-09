@@ -1,13 +1,7 @@
-variable "environment" {
-  description = "Environment name"
+variable "name" {
+  description = "Name of the deployment. Resources deployed to AWS will have this name (sometimes just as a prefix)."
   type        = string
-  default     = "production"
-}
-
-variable "aws_region" {
-  description = "AWS Region"
-  type        = string
-  default     = "eu-west-1"
+  default     = "detectify-scanner"
 }
 
 variable "vpc_id" {
@@ -18,16 +12,6 @@ variable "vpc_id" {
 variable "private_subnet_ids" {
   description = "Private subnet IDs for EKS nodes (minimum 2)"
   type        = list(string)
-}
-
-variable "alb_inbound_cidrs" {
-  description = "CIDR blocks allowed to access the internal ALB"
-  type        = list(string)
-}
-
-variable "scanner_url" {
-  description = "Domain name for the scanner endpoint"
-  type        = string
 }
 
 # Sensitive variables - provide via terraform.tfvars or environment variables

@@ -7,6 +7,27 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [2.0.0] - 2026-03-09
+
+### Added
+
+- Allow deploying scanner API without creating a DNS record and TLS certificate.
+- Enable public EKS API endpoint (enabled by default) to make setup easier.
+- Added output for ALB ARN.
+
+### Changed
+
+- Many breaking changes from renaming and merging variables and outputs.
+- Use EKS Auto Mode-managed CNI, load balancers, CoreDNS, and kube-proxy instead of via EKS addons.
+- Don't require scanner API endpoint to be enabled.
+
+### Removed
+
+- Removed Prometheus and related configuration and resources.
+- Removed `var.cluster_name_prefix` and `var.environment` (merged to a single `var.name`).
+- Removed `var.aws_region` (uses region set in provider instead)
+- Removed option to provide existing ACM ARN.
+
 ## [1.2.1] - 2026-02-25
 
 ### Fixed
@@ -36,6 +57,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Removed
 
 - Removed option to set Redis replicas. It is now always 1 if enabled.
+- Removed Prometheus and related configuration and resources.
+- Removed `var.cluster_name_prefix` and `var.environment` (merged to a single `var.name`).
+- Removed `var.aws_region` (uses region set in provider instead)
+- Removed option to provide existing ACM ARN.
 
 ## [1.0.7] - 2026-02-17
 

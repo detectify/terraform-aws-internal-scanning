@@ -3,7 +3,6 @@
 #---------------------------------------------------------------
 
 locals {
-  cluster_name = "${var.environment}-${var.cluster_name_prefix}"
   # Use provided KMS key or the one created by this module
   kms_key_arn = var.kms_key_arn != null ? var.kms_key_arn : aws_kms_key.eks_secrets[0].arn
 }
@@ -11,7 +10,7 @@ locals {
 resource "aws_kms_key" "eks_secrets" {
   count = var.kms_key_arn == null ? 1 : 0
 
-  description             = "KMS key for EKS secrets encryption - ${local.cluster_name}"
+  description             = "For EKS secrets encryption - ${var.name}"
   deletion_window_in_days = var.kms_key_deletion_window
   enable_key_rotation     = true
 
@@ -46,14 +45,14 @@ resource "aws_kms_key" "eks_secrets" {
   })
 
   tags = {
-    Name = "${local.cluster_name}-eks-secrets"
+    Name = "${var.name}-eks-secrets"
   }
 }
 
 resource "aws_kms_alias" "eks_secrets" {
   count = var.kms_key_arn == null ? 1 : 0
 
-  name          = "alias/${local.cluster_name}-eks-secrets"
+  name          = "alias/${var.name}-eks-secrets"
   target_key_id = aws_kms_key.eks_secrets[0].key_id
 }
 
@@ -65,7 +64,7 @@ module "eks" {
   source  = "terraform-aws-modules/eks/aws"
   version = "~> 20.0"
 
-  cluster_name    = local.cluster_name
+  cluster_name    = var.name
   cluster_version = var.cluster_version
 
   cluster_endpoint_private_access      = true
@@ -92,37 +91,20 @@ module "eks" {
   }
 
   # Shorten IAM role name to avoid 38-character limit
-  node_iam_role_name            = "${var.cluster_name_prefix}-eks-auto"
+  node_iam_role_name            = "${var.name}-eks-auto"
   node_iam_role_use_name_prefix = false
 
   # Required for EKS Auto Mode - must be false when cluster_compute_config is enabled
   bootstrap_self_managed_addons = false
 
   tags = {
-    Service = var.cluster_name_prefix
+    Service = var.name
   }
 
   cluster_security_group_additional_rules = var.cluster_security_group_additional_rules
 
   cluster_addons = merge(
-    {
-      coredns = {
-        resolve_conflicts_on_create = "OVERWRITE"
-        resolve_conflicts_on_update = "OVERWRITE"
-        addon_version               = "v1.13.2-eksbuild.1"
-      }
-      kube-proxy = {
-        resolve_conflicts_on_create = "OVERWRITE"
-        resolve_conflicts_on_update = "OVERWRITE"
-        addon_version               = "v1.35.0-eksbuild.2"
-      }
-      vpc-cni = {
-        resolve_conflicts_on_create = "OVERWRITE"
-        resolve_conflicts_on_update = "OVERWRITE"
-        service_account_role_arn    = aws_iam_role.vpc_cni.arn
-        addon_version               = "v1.21.1-eksbuild.3"
-      },
-    },
+    {},
     var.enable_cloudwatch_observability ? {
       amazon-cloudwatch-observability = {
         resolve_conflicts_on_create = "OVERWRITE"
@@ -156,44 +138,12 @@ module "eks" {
 }
 
 #---------------------------------------------------------------
-# IAM Role for VPC CNI
-#---------------------------------------------------------------
-resource "aws_iam_role" "vpc_cni" {
-  name_prefix = format("%s-vpc-cni-", var.cluster_name_prefix)
-  description = "The IAM role for VPC CNI addon"
-
-  assume_role_policy = jsonencode({
-    Version = "2012-10-17"
-    Statement = [
-      {
-        Action = "sts:AssumeRoleWithWebIdentity"
-        Effect = "Allow"
-        Principal = {
-          Federated = module.eks.oidc_provider_arn
-        }
-        Condition = {
-          StringEquals = {
-            "${replace(module.eks.cluster_oidc_issuer_url, "https://", "")}:sub" : "system:serviceaccount:kube-system:aws-node",
-            "${replace(module.eks.cluster_oidc_issuer_url, "https://", "")}:aud" : "sts.amazonaws.com"
-          }
-        }
-      }
-    ]
-  })
-}
-
-resource "aws_iam_role_policy_attachment" "vpc_cni_policy_attachment" {
-  policy_arn = "arn:aws:iam::aws:policy/AmazonEKS_CNI_Policy"
-  role       = aws_iam_role.vpc_cni.name
-}
-
-#---------------------------------------------------------------
 # IAM Role for Amazon CloudWatch Observability
 #---------------------------------------------------------------
 resource "aws_iam_role" "cloudwatch_observability_role" {
   count = var.enable_cloudwatch_observability ? 1 : 0
 
-  name_prefix = format("%s-cw-", var.cluster_name_prefix)
+  name_prefix = format("%s-cw-", var.name)
   description = "The IAM role for amazon-cloudwatch-observability addon"
 
   assume_role_policy = jsonencode({

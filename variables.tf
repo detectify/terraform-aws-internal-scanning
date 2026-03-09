@@ -24,35 +24,18 @@ variable "helm_chart_path" {
 # Core Configuration
 #---------------------------------------------------------------
 
-variable "environment" {
-  description = "Environment name (e.g., development, staging, production)"
+variable "name" {
+  description = "Unique name for this deployment (e.g. production-internal-scanning)"
   type        = string
 
   validation {
-    condition     = can(regex("^[a-z0-9-]+$", var.environment))
-    error_message = "Environment must contain only lowercase letters, numbers, and hyphens."
-  }
-}
-
-variable "aws_region" {
-  description = "AWS Region where resources will be deployed"
-  type        = string
-  default     = "us-east-1"
-}
-
-variable "cluster_name_prefix" {
-  description = "Prefix for the EKS cluster name and IAM role names. Must be unique per AWS account deployment. For multi-region deployments, include the region (e.g., \"internal-scanning-eu-west-1\")."
-  type        = string
-  default     = "internal-scanning"
-
-  validation {
-    condition     = can(regex("^[a-z0-9-]+$", var.cluster_name_prefix))
-    error_message = "cluster_name_prefix must contain only lowercase letters, numbers, and hyphens."
+    condition     = can(regex("^[a-z0-9-]+$", var.name))
+    error_message = "name must contain only lowercase letters, numbers, and hyphens."
   }
 
   validation {
-    condition     = length(var.cluster_name_prefix) <= 29
-    error_message = "cluster_name_prefix must be 29 characters or fewer. The EKS node IAM role is named '{cluster_name_prefix}-eks-auto' and must not exceed 38 characters."
+    condition     = length(var.name) <= 29
+    error_message = "'name' must be 29 characters or fewer or some role names will be too long for AWS to accept."
   }
 }
 
@@ -86,14 +69,16 @@ variable "cluster_endpoint_public_access" {
     Enable public access to the EKS cluster API endpoint. When true, the Kubernetes
     API is reachable over the internet (subject to cluster_endpoint_public_access_cidrs).
 
-    Use this when users need kubectl/deployment access without VPN connectivity.
+    Use this when users need kubectl/deployment access without direct connection via e.g. VPN
+    or bastion hosts.
+
     Private access remains enabled regardless of this setting.
 
     IMPORTANT: Even with public access, all requests still require valid IAM
     authentication. Restrict access further using cluster_endpoint_public_access_cidrs.
   EOT
   type        = bool
-  default     = false
+  default     = true
 }
 
 variable "cluster_endpoint_public_access_cidrs" {
@@ -139,40 +124,44 @@ variable "cluster_security_group_additional_rules" {
   default     = {}
 }
 
-variable "alb_inbound_cidrs" {
-  description = <<-EOT
-    CIDR blocks allowed to access the scanner API endpoint via the internal ALB.
-
-    Typically includes:
-    - Your VPC CIDR (required - scanner components communicate via the ALB)
-    - VPN/corporate network CIDRs (for administrative access and debugging)
-
-    Example: ["10.0.0.0/16", "172.16.0.0/12"]
-  EOT
-  type        = list(string)
-
-  validation {
-    condition     = length(var.alb_inbound_cidrs) > 0
-    error_message = "At least one CIDR block must be specified for ALB access."
-  }
-}
-
 #---------------------------------------------------------------
-# Scanner Endpoint Configuration
+# API Configuration
 #---------------------------------------------------------------
-# The scanner endpoint is the internal API that receives scan requests. It runs
+# The scanner API endpoint is the internal API that receives scan requests. It runs
 # behind an internal ALB and is only accessible from within your network.
 #
 # DNS Setup:
-# - route53_zone_id: Can be a private hosted zone (for internal DNS resolution)
-# - acm_validation_zone_id: Must be a PUBLIC hosted zone (ACM requires public DNS for validation)
+# - route53_private_zone_id: Can be a private hosted zone (for internal DNS resolution)
+# - route53_public_zone_id: Must be a PUBLIC hosted zone (ACM requires public DNS for validation)
 #
-# If your DNS zone is private-only, you'll need to either:
-# 1. Use a separate public zone for ACM validation (set acm_validation_zone_id)
-# 2. Bring your own certificate (set create_acm_certificate = false, provide acm_certificate_arn)
 #---------------------------------------------------------------
 
-variable "scanner_url" {
+variable "api_enabled" {
+  description = <<-EOT
+    Enables the Internal Scanner REST API that maybe be used to start scans, fetch results etc.
+
+    Enabling this creates an internal load balancer to expose the API. When `api_domain` is also
+    provided, DNS records and a TLS certificate are set up as well.
+  EOT
+
+  type = bool
+
+  default = false
+}
+
+variable "api_allowed_cidrs" {
+  description = <<-EOT
+    CIDR blocks allowed to access the scanner API endpoint via an internal ALB.
+
+    Example: ["10.0.0.0/16", "172.16.0.0/12"]
+
+    `api_enabled` must be `true` for this to have any effect.
+  EOT
+  type        = list(string)
+  default     = []
+}
+
+variable "api_domain" {
   description = <<-EOT
     Hostname for the scanner API endpoint (e.g., scanner.example.com).
 
@@ -182,58 +171,58 @@ variable "scanner_url" {
     - Get logs (for support requests to Detectify)
 
     The endpoint is exposed via an internal ALB and is only accessible from
-    networks specified in alb_inbound_cidrs.
+    networks specified in api_allowed_cidrs.
   EOT
   type        = string
+  default     = null
 
   validation {
-    condition     = can(regex("^[a-z0-9.-]+$", var.scanner_url))
-    error_message = "Scanner URL must be a valid domain name without protocol (e.g., scanner.example.com)."
+    condition     = var.api_domain == null || can(regex("^[a-z0-9.-]+$", var.api_domain))
+    error_message = "API domain must be a valid domain name (e.g., scanner.example.com)."
   }
 }
 
-variable "create_route53_record" {
-  description = "Create Route53 DNS A record pointing scanner_url to the ALB. Set to false if managing DNS externally."
-  type        = bool
-  default     = false
-}
-
-variable "route53_zone_id" {
+variable "route53_private_zone_id" {
   description = <<-EOT
-    Route53 hosted zone ID for the scanner DNS A record.
-    Required when create_route53_record = true.
+    Route53 hosted zone ID for DNS A records (scanner API).
+    Required when api_domain is set.
 
-    Can be a private hosted zone if the scanner is only accessed internally.
-    The zone must contain the domain used in scanner_url.
+    Can be a private hosted zone if the endpoint is only accessed internally.
+    The zone must contain the domain used in api_domain.
   EOT
-  type        = string
-  default     = null
+
+  type    = string
+  default = null
 }
 
-variable "acm_validation_zone_id" {
+variable "route53_public_zone_id" {
   description = <<-EOT
-    Route53 hosted zone ID for ACM certificate DNS validation.
-    Defaults to route53_zone_id if not specified.
+    Route53 public hosted zone ID for ACM certificate DNS validation.
+    Required when api_domain is set.
 
     IMPORTANT: Must be a PUBLIC hosted zone - ACM certificate validation requires
-    publicly resolvable DNS records. If route53_zone_id is a private zone, you must
-    provide a separate public zone here, or use create_acm_certificate = false with
-    your own certificate.
+    publicly resolvable DNS records.
   EOT
-  type        = string
-  default     = null
+
+  type    = string
+  default = null
 }
 
-variable "create_acm_certificate" {
-  description = "Create and validate an ACM certificate for the scanner endpoint. Set to false to use an existing certificate."
-  type        = bool
-  default     = true
-}
+check "api_config" {
+  assert {
+    condition     = var.api_domain == null || var.route53_public_zone_id != null
+    error_message = "route53_public_zone_id must be set when api_domain is set."
+  }
 
-variable "acm_certificate_arn" {
-  description = "ARN of an existing ACM certificate. Required when create_acm_certificate = false."
-  type        = string
-  default     = null
+  assert {
+    condition     = var.api_domain == null || var.route53_private_zone_id != null
+    error_message = "route53_private_zone_id must be set when api_domain is set."
+  }
+
+  assert {
+    condition     = !var.api_enabled || length(var.api_allowed_cidrs) > 0
+    error_message = "api_allowed_cidrs must not be empty when api_enabled is true."
+  }
 }
 
 #---------------------------------------------------------------
@@ -533,18 +522,6 @@ variable "enable_cloudwatch_observability" {
   description = "Enable Amazon CloudWatch Observability addon for logs and metrics"
   type        = bool
   default     = true
-}
-
-variable "enable_prometheus" {
-  description = "Enable Prometheus monitoring stack with pushgateway. When true, deploys Prometheus for metrics scraping and pushgateway for ephemeral job metrics. When false, no metrics infrastructure is deployed."
-  type        = bool
-  default     = false
-}
-
-variable "prometheus_url" {
-  description = "Full URL for Prometheus endpoint (required if enable_prometheus is true)"
-  type        = string
-  default     = null
 }
 
 #---------------------------------------------------------------

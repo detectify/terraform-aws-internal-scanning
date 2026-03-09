@@ -114,8 +114,6 @@ resource "helm_release" "scanner" {
           imagePullPolicy    = "Always"
           imagePullSecret    = "detectify-registry"
           chromeContainerTag = var.internal_scanning_version
-          enableMetrics      = tostring(var.enable_prometheus)
-
           # Logging configuration
           logFormat = var.log_format
 
@@ -189,9 +187,9 @@ resource "kubernetes_storage_class_v1" "ebs_gp3" {
 #---------------------------------------------------------------
 
 resource "aws_acm_certificate" "scan_scheduler" {
-  count = var.create_acm_certificate ? 1 : 0
+  count = var.api_enabled && var.api_domain != null ? 1 : 0
 
-  domain_name       = var.scanner_url
+  domain_name       = var.api_domain
   validation_method = "DNS"
 
   lifecycle {
@@ -199,71 +197,14 @@ resource "aws_acm_certificate" "scan_scheduler" {
   }
 
   tags = {
-    Name = "scanner-${var.environment}"
+    Name = "scanner-${var.name}"
   }
 }
 
 # Certificate validation (requires DNS records to be created externally or via Route53)
 resource "aws_acm_certificate_validation" "scan_scheduler" {
-  count = var.create_acm_certificate && var.create_route53_record ? 1 : 0
+  count = var.api_enabled && var.api_domain != null ? 1 : 0
 
   certificate_arn         = aws_acm_certificate.scan_scheduler[0].arn
   validation_record_fqdns = [for record in aws_route53_record.scan_scheduler_cert_validation : record.fqdn]
-}
-
-#---------------------------------------------------------------
-# Internal ALB Ingress for Scan Scheduler
-#---------------------------------------------------------------
-
-resource "kubernetes_ingress_v1" "scan_scheduler" {
-  wait_for_load_balancer = true
-
-  metadata {
-    name      = "scan-scheduler"
-    namespace = "scanner" # Created by Helm
-
-    annotations = {
-      "kubernetes.io/ingress.class"                    = "alb"
-      "alb.ingress.kubernetes.io/scheme"               = "internal"
-      "alb.ingress.kubernetes.io/target-type"          = "ip"
-      "alb.ingress.kubernetes.io/healthcheck-path"     = "/health"
-      "alb.ingress.kubernetes.io/healthcheck-protocol" = "HTTP"
-      "alb.ingress.kubernetes.io/listen-ports"         = "[{\"HTTP\": 80}, {\"HTTPS\": 443}]"
-      "alb.ingress.kubernetes.io/ssl-redirect"         = "443"
-      "alb.ingress.kubernetes.io/certificate-arn"      = var.create_acm_certificate ? (var.create_route53_record ? aws_acm_certificate_validation.scan_scheduler[0].certificate_arn : aws_acm_certificate.scan_scheduler[0].arn) : var.acm_certificate_arn
-      "alb.ingress.kubernetes.io/subnets"              = join(",", var.private_subnet_ids)
-      "alb.ingress.kubernetes.io/tags"                 = "Environment=${var.environment},Service=${var.cluster_name_prefix}"
-      "alb.ingress.kubernetes.io/inbound-cidrs"        = join(",", var.alb_inbound_cidrs)
-    }
-  }
-
-  spec {
-    ingress_class_name = "alb"
-
-    rule {
-      host = var.scanner_url
-
-      http {
-        path {
-          path      = "/"
-          path_type = "Prefix"
-
-          backend {
-            service {
-              name = "scan-scheduler" # Created by Helm
-              port {
-                number = 3000
-              }
-            }
-          }
-        }
-      }
-    }
-  }
-
-  depends_on = [
-    module.eks, # Wait for EKS cluster and access entries
-    helm_release.aws_load_balancer_controller,
-    helm_release.scanner, # Wait for Helm to create namespace and service
-  ]
 }

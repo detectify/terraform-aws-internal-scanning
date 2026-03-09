@@ -14,12 +14,8 @@ This example demonstrates the minimum configuration required to deploy Detectify
 1. Create `terraform.tfvars` with your values:
 
    ```hcl
-   environment        = "production"
-   aws_region         = "eu-west-1"
    vpc_id             = "vpc-xxxxx"
    private_subnet_ids = ["subnet-xxxxx", "subnet-yyyyy"]
-   alb_inbound_cidrs  = ["10.0.0.0/8"]
-   scanner_url        = "scanner.internal.example.com"
 
    # Credentials provided by Detectify
    license_key       = "your-license-key"
@@ -39,25 +35,25 @@ This example demonstrates the minimum configuration required to deploy Detectify
 3. Configure kubectl:
 
    ```bash
-   # Use the output command
-   aws eks update-kubeconfig --region eu-west-1 --name production-internal-scanning
+   terraform output -raw kubeconfig_command
+   
+   # run the output of the above command, e.g.
+   aws eks update-kubeconfig --region eu-west-1 --name detectify-scanner
    ```
 
 4. Verify pods are running:
 
    ```bash
-   kubectl get pods -A
+   kubectl get pods -n scanner
    ```
 
 ## Inputs
 
 | Name | Description | Required |
 |------|-------------|----------|
-| `environment` | Environment name | Yes |
+| `name` | Name of deployment | No |
 | `vpc_id` | VPC ID | Yes |
 | `private_subnet_ids` | Private subnet IDs | Yes |
-| `alb_inbound_cidrs` | Allowed CIDR blocks | Yes |
-| `scanner_url` | Scanner domain name | Yes |
 | `license_key` | Detectify license key | Yes |
 | `connector_api_key` | Connector API key | Yes |
 | `registry_username` | Registry username | Yes |
@@ -67,5 +63,4 @@ This example demonstrates the minimum configuration required to deploy Detectify
 
 | Name | Description |
 |------|-------------|
-| `scanner_url` | Scanner API endpoint URL |
 | `kubeconfig_command` | Command to configure kubectl |

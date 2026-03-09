@@ -47,9 +47,13 @@ output "cluster_primary_security_group_id" {
 # Scanner Application Outputs
 #---------------------------------------------------------------
 
-output "scanner_url" {
+output "api_endpoint" {
   description = "Scanner API endpoint URL"
-  value       = "https://${var.scanner_url}"
+  value = (
+    !var.api_enabled ? null :
+    var.api_domain != null ? "https://${var.api_domain}" :
+    "http://${kubernetes_ingress_v1.scan_scheduler[0].status[0].load_balancer[0].ingress[0].hostname}"
+  )
 }
 
 output "scanner_namespace" {
@@ -59,12 +63,17 @@ output "scanner_namespace" {
 
 output "alb_dns_name" {
   description = "DNS name of the ALB created for scan scheduler"
-  value       = try(kubernetes_ingress_v1.scan_scheduler.status[0].load_balancer[0].ingress[0].hostname, "")
+  value       = var.api_enabled ? kubernetes_ingress_v1.scan_scheduler[0].status[0].load_balancer[0].ingress[0].hostname : null
 }
 
 output "alb_zone_id" {
   description = "Route53 zone ID of the ALB (for DNS record creation)"
   value       = local.alb_hosted_zone_id
+}
+
+output "alb_arn" {
+  description = "The AWS ARN of the Application Load Balancer."
+  value       = var.api_enabled ? data.aws_lb.auto_mode_alb[0].arn : null
 }
 
 #---------------------------------------------------------------
@@ -73,12 +82,12 @@ output "alb_zone_id" {
 
 output "acm_certificate_arn" {
   description = "ARN of the ACM certificate for scan scheduler"
-  value       = var.create_acm_certificate ? aws_acm_certificate.scan_scheduler[0].arn : var.acm_certificate_arn
+  value       = var.api_enabled && var.api_domain != null ? aws_acm_certificate.scan_scheduler[0].arn : null
 }
 
 output "acm_certificate_domain_validation_options" {
-  description = "Domain validation options for ACM certificate. Use these to create DNS validation records when managing DNS externally (create_route53_record = false)."
-  value = var.create_acm_certificate ? [
+  description = "Domain validation options for ACM certificate. Use these to create DNS validation records when managing DNS externally (create_route53_records = false)."
+  value = var.api_enabled && var.api_domain != null ? [
     for dvo in aws_acm_certificate.scan_scheduler[0].domain_validation_options : {
       domain_name           = dvo.domain_name
       resource_record_name  = dvo.resource_record_name
@@ -92,28 +101,9 @@ output "acm_certificate_domain_validation_options" {
 # IAM Role Outputs
 #---------------------------------------------------------------
 
-output "vpc_cni_role_arn" {
-  description = "IAM role ARN for VPC CNI addon"
-  value       = aws_iam_role.vpc_cni.arn
-}
-
 output "cloudwatch_observability_role_arn" {
   description = "IAM role ARN for CloudWatch Observability addon"
   value       = var.enable_cloudwatch_observability ? aws_iam_role.cloudwatch_observability_role[0].arn : null
-}
-
-output "alb_controller_role_arn" {
-  description = "IAM role ARN for AWS Load Balancer Controller"
-  value       = module.load_balancer_controller_irsa_role.iam_role_arn
-}
-
-#---------------------------------------------------------------
-# Prometheus Outputs (if enabled)
-#---------------------------------------------------------------
-
-output "prometheus_url" {
-  description = "Prometheus endpoint URL (if enabled)"
-  value       = var.enable_prometheus ? "https://${var.prometheus_url}" : null
 }
 
 #---------------------------------------------------------------
@@ -136,5 +126,5 @@ output "kms_key_id" {
 
 output "kubeconfig_command" {
   description = "Command to update kubeconfig for kubectl access"
-  value       = "aws eks update-kubeconfig --region ${var.aws_region} --name ${module.eks.cluster_name}"
+  value       = "aws eks update-kubeconfig --region ${data.aws_region.current.id} --name ${module.eks.cluster_name}"
 }
